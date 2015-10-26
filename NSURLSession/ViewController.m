@@ -18,7 +18,16 @@
 @property (nonatomic,strong) NSData *recievedData;
 
 @end
-
+/**
+ * 存在的问题： 
+ * 1. 暂停时候存在内存峰值：
+ *---因为保存了暂停时候已经接受到的数据
+ *---因为在下载结束时候还要一次性将所有在tmp中的数据导入内存，然后转存到别的地方。
+ *---所以下载大文件对NSURLSessionDownloadTask 来讲是不合适的。
+ * 2. 存在循环引用问题
+ *---session 对delegate 进行了retain ，而不是weak
+ *---解决办法： 不是在下载结束的时候对self.session进行nil，而是对其进行invalidateAndCancel 或者是finishAndCancel 操作，取消session中管理的任务，然后系统将会自动对session进行回收
+ */
 @implementation ViewController
 
 -(void)dealloc{
@@ -30,8 +39,6 @@
     [super viewDidLoad];
     self.progresss.progress = 0;
 }
-
-
 
 -(void)downSession{
     NSString *urlStr = [NSString stringWithFormat:@"http://127.0.0.1/01-知识点回顾.mp4"];
